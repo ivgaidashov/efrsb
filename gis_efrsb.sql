@@ -61,13 +61,13 @@ END gis_efrsb;
 /
 CREATE OR REPLACE PACKAGE BODY gis_efrsb is
 
-  /*Вывод всех сообщений dnms_output в пакете для дебага*/
+  /*Р’С‹РІРѕРґ РІСЃРµС… СЃРѕРѕР±С‰РµРЅРёР№ dnms_output РІ РїР°РєРµС‚Рµ РґР»СЏ РґРµР±Р°РіР°*/
   PROCEDURE p_set_debugging(p_debugging BOOLEAN) IS
   BEGIN
     debugging := p_debugging;
   END p_set_debugging;
 
-  /*Логирование событий*/
+  /*Р›РѕРіРёСЂРѕРІР°РЅРёРµ СЃРѕР±С‹С‚РёР№*/
   PROCEDURE p_log_efrsb(p_time    DATE,
                         p_type    VARCHAR2,
                         p_funcion VARCHAR2,
@@ -85,12 +85,12 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
     COMMIT;
   END p_log_efrsb;
 
-  /*Поиск открытого судебного / внесудебного дела*/
+  /*РџРѕРёСЃРє РѕС‚РєСЂС‹С‚РѕРіРѕ СЃСѓРґРµР±РЅРѕРіРѕ / РІРЅРµСЃСѓРґРµР±РЅРѕРіРѕ РґРµР»Р°*/
   PROCEDURE p_get_legal_cases(p_bankrupt_id NUMBER,
-                              p_result      OUT NUMBER /*1 - есть незакрытое дело, 0 - производства по делам завершены*/) IS
-    /*одновременно по одному банкроту не может быть более одного дела, поэтому ищем все сообщения и отчёты по должнику.
-    если последнее сообщение или отчёт о закрытии, то возвращаем 0.
-    если сообщения о возобновлении или другие типы, то возвращаем 1 */
+                              p_result      OUT NUMBER /*1 - РµСЃС‚СЊ РЅРµР·Р°РєСЂС‹С‚РѕРµ РґРµР»Рѕ, 0 - РїСЂРѕРёР·РІРѕРґСЃС‚РІР° РїРѕ РґРµР»Р°Рј Р·Р°РІРµСЂС€РµРЅС‹*/) IS
+    /*РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РїРѕ РѕРґРЅРѕРјСѓ Р±Р°РЅРєСЂРѕС‚Сѓ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±РѕР»РµРµ РѕРґРЅРѕРіРѕ РґРµР»Р°, РїРѕСЌС‚РѕРјСѓ РёС‰РµРј РІСЃРµ СЃРѕРѕР±С‰РµРЅРёСЏ Рё РѕС‚С‡С‘С‚С‹ РїРѕ РґРѕР»Р¶РЅРёРєСѓ.
+    РµСЃР»Рё РїРѕСЃР»РµРґРЅРµРµ СЃРѕРѕР±С‰РµРЅРёРµ РёР»Рё РѕС‚С‡С‘С‚ Рѕ Р·Р°РєСЂС‹С‚РёРё, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј 0.
+    РµСЃР»Рё СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ РІРѕР·РѕР±РЅРѕРІР»РµРЅРёРё РёР»Рё РґСЂСѓРіРёРµ С‚РёРїС‹, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј 1 */
   
     CURSOR get_extr_documents(debtor_id NUMBER) IS
       SELECT messagetype
@@ -150,24 +150,24 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
   BEGIN
     IF debugging THEN
       DBMS_OUTPUT.PUT_LINE(chr(10) ||
-                           'Клиент найден в реестре банкротов. Проверяем судебные и внесудебные дела.');
+                           'РљР»РёРµРЅС‚ РЅР°Р№РґРµРЅ РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ. РџСЂРѕРІРµСЂСЏРµРј СЃСѓРґРµР±РЅС‹Рµ Рё РІРЅРµСЃСѓРґРµР±РЅС‹Рµ РґРµР»Р°.');
     END IF;
     IF debugging THEN
-      DBMS_OUTPUT.PUT_LINE('Банкрот ' || to_char(p_bankrupt_id));
+      DBMS_OUTPUT.PUT_LINE('Р‘Р°РЅРєСЂРѕС‚ ' || to_char(p_bankrupt_id));
     END IF;
   
     FOR doc IN get_documents(p_bankrupt_id) LOOP
       IF doc."messagedate" IS NOT NULL AND doc."closeddate" IS NULL THEN
         IF debugging THEN
-          DBMS_OUTPUT.PUT_LINE('Дело ' || doc.LEGALCASENUMBER ||
-                               ' актуально');
+          DBMS_OUTPUT.PUT_LINE('Р”РµР»Рѕ ' || doc.LEGALCASENUMBER ||
+                               ' Р°РєС‚СѓР°Р»СЊРЅРѕ');
         END IF;
         p_result := 1;
       END IF;
       IF doc."Resumeddate" >= doc."closeddate" THEN
         IF debugging THEN
-          DBMS_OUTPUT.PUT_LINE('Дело ' || doc.LEGALCASENUMBER ||
-                               ' актуально');
+          DBMS_OUTPUT.PUT_LINE('Р”РµР»Рѕ ' || doc.LEGALCASENUMBER ||
+                               ' Р°РєС‚СѓР°Р»СЊРЅРѕ');
         END IF;
         p_result := 1;
       END IF;
@@ -175,7 +175,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
   
     FOR extr IN get_extr_documents(p_bankrupt_id) LOOP
       IF debugging THEN
-        DBMS_OUTPUT.PUT_LINE('Поиск внесудебных сообщений. Последнее с типом: ' ||
+        DBMS_OUTPUT.PUT_LINE('РџРѕРёСЃРє РІРЅРµСЃСѓРґРµР±РЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№. РџРѕСЃР»РµРґРЅРµРµ СЃ С‚РёРїРѕРј: ' ||
                              extr.messagetype);
       END IF;
       IF extr.messagetype = 'StartOfExtrajudicialBankruptcy' THEN
@@ -184,7 +184,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
     END LOOP;
   
     IF debugging AND p_result = 1 THEN
-      DBMS_OUTPUT.PUT_LINE('Есть текущее дело');
+      DBMS_OUTPUT.PUT_LINE('Р•СЃС‚СЊ С‚РµРєСѓС‰РµРµ РґРµР»Рѕ');
     END IF;
   
   EXCEPTION
@@ -199,28 +199,28 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       p_result := -1;
   END p_get_legal_cases;
 
-  /*Возвращает строковый результат поиска активных дел. Используется для отчёта 1%52*/
+  /*Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃС‚СЂРѕРєРѕРІС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ РїРѕРёСЃРєР° Р°РєС‚РёРІРЅС‹С… РґРµР». РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РѕС‚С‡С‘С‚Р° 1%52*/
   FUNCTION f_has_active_cases(p_debtorid NUMBER, p_cus_type NUMBER)
     RETURN VARCHAR2 IS
     v_result NUMBER;
-    v_return VARCHAR2(50) := 'Ошибка определения статуса банкротства';
+    v_return VARCHAR2(50) := 'РћС€РёР±РєР° РѕРїСЂРµРґРµР»РµРЅРёСЏ СЃС‚Р°С‚СѓСЃР° Р±Р°РЅРєСЂРѕС‚СЃС‚РІР°';
   BEGIN
     IF p_cus_type = 2 THEN
-      RETURN 'Компания-банкрот';
+      RETURN 'РљРѕРјРїР°РЅРёСЏ-Р±Р°РЅРєСЂРѕС‚';
     END IF;
   
     p_get_legal_cases(p_debtorid, v_result);
     IF v_result = 1 THEN
-      v_return := 'Идёт производство';
+      v_return := 'РРґС‘С‚ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ';
     ELSE
-      v_return := 'Производства завершены';
+      v_return := 'РџСЂРѕРёР·РІРѕРґСЃС‚РІР° Р·Р°РІРµСЂС€РµРЅС‹';
     END IF;
   
     RETURN v_return;
   END f_has_active_cases;
 
-  /*Функция возвращает коллекцию банкротов, найденных по полученным параметрам. Используется коллекция, т.к. есть редкие случаи дубликатов в реестре банкротов*/
-  FUNCTION f_get_debtor_id(p_type      NUMBER /*1-ФЛ, 2-ЮЛ, 4-ИП*/,
+  /*Р¤СѓРЅРєС†РёСЏ РІРѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»Р»РµРєС†РёСЋ Р±Р°РЅРєСЂРѕС‚РѕРІ, РЅР°Р№РґРµРЅРЅС‹С… РїРѕ РїРѕР»СѓС‡РµРЅРЅС‹Рј РїР°СЂР°РјРµС‚СЂР°Рј. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєРѕР»Р»РµРєС†РёСЏ, С‚.Рє. РµСЃС‚СЊ СЂРµРґРєРёРµ СЃР»СѓС‡Р°Рё РґСѓР±Р»РёРєР°С‚РѕРІ РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ*/
+  FUNCTION f_get_debtor_id(p_type      NUMBER /*1-Р¤Р›, 2-Р®Р›, 4-РРџ*/,
                            p_inn       VARCHAR2,
                            p_snils     VARCHAR2,
                            p_ogrn      VARCHAR2,
@@ -237,8 +237,8 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
         FROM gis_efrsb_debtors d
        RIGHT JOIN gis_efrsb_names n
           on d.bankruptid = n.bankruptid
-       WHERE translate(n.fullname, 'ЙЁ', 'ИЕ') =
-             translate(upper(p_fullname), 'ЙЁ', 'ИЕ')
+       WHERE translate(n.fullname, 'Р™РЃ', 'РР•') =
+             translate(upper(p_fullname), 'Р™РЃ', 'РР•')
          and d.BIRTHDATE = p_birthdate;
     CURSOR c_inn_snils_ogrn_search(p_inn VARCHAR2, p_ogrn VARCHAR2, p_snils VARCHAR2) IS
       SELECT bankruptid
@@ -256,7 +256,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
     IF p_type = 1 THEN
       IF p_inn IS NOT NULL OR p_snils IS NOT NULL THEN
         IF debugging THEN
-          DBMS_OUTPUT.PUT_LINE('ФЛ. Поиск по ИНН и СНИЛС.');
+          DBMS_OUTPUT.PUT_LINE('Р¤Р›. РџРѕРёСЃРє РїРѕ РРќРќ Рё РЎРќРР›РЎ.');
         END IF;
         FOR debtor IN c_inn_snils_search(p_inn,
                                          translate(p_snils, 'X- ', 'X')) LOOP
@@ -264,28 +264,28 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
         END LOOP;
       ELSIF p_fullname IS NOT NULL AND p_birthdate IS NOT NULL THEN
         IF debugging THEN
-          DBMS_OUTPUT.PUT_LINE('ФЛ. Поиск по ФИО и дате рождения.');
+          DBMS_OUTPUT.PUT_LINE('Р¤Р›. РџРѕРёСЃРє РїРѕ Р¤РРћ Рё РґР°С‚Рµ СЂРѕР¶РґРµРЅРёСЏ.');
         END IF;
         FOR debtor IN c_name_birthd_search(p_fullname, p_birthdate) LOOP
           found_debtors(found_debtors.COUNT + 1) := debtor.bankruptid;
         END LOOP;
       ELSE
         IF debugging THEN
-          DBMS_OUTPUT.PUT_LINE('ФЛ. Нет параметров для поиска.');
+          DBMS_OUTPUT.PUT_LINE('Р¤Р›. РќРµС‚ РїР°СЂР°РјРµС‚СЂРѕРІ РґР»СЏ РїРѕРёСЃРєР°.');
         END IF;
         found_debtors(-1) := null;
       END IF;
     
     ELSIF p_type = 4 THEN
       IF debugging THEN
-        DBMS_OUTPUT.PUT_LINE('ИП. Ищем по ИНН, ОГРН, СНИЛС.');
+        DBMS_OUTPUT.PUT_LINE('РРџ. РС‰РµРј РїРѕ РРќРќ, РћР“Р Рќ, РЎРќРР›РЎ.');
       END IF;
       FOR debtor IN c_inn_snils_ogrn_search(p_inn, p_ogrn, p_snils) LOOP
         found_debtors(found_debtors.COUNT + 1) := debtor.bankruptid;
       END LOOP;
     ELSE
       IF debugging THEN
-        DBMS_OUTPUT.PUT_LINE('ЮЛ. Ищем по ИНН, ОГРН.');
+        DBMS_OUTPUT.PUT_LINE('Р®Р›. РС‰РµРј РїРѕ РРќРќ, РћР“Р Рќ.');
       END IF;
       FOR debtor IN c_inn_ogrn_search(p_inn, p_ogrn) LOOP
         found_debtors(found_debtors.COUNT + 1) := debtor.bankruptid;
@@ -301,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                   'F_GET_DEBTOR_ID',
                   null,
                   null,
-                  'Клиент ' || p_fullname || ' ' ||
+                  'РљР»РёРµРЅС‚ ' || p_fullname || ' ' ||
                   to_char(p_birthdate, 'dd.mm.yyyy') || ' ' || p_inn || ' ' ||
                   p_snils || ' ' || to_char(SQLCODE) || ' ' ||
                   to_char(SQLERRM),
@@ -310,16 +310,16 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       RETURN found_debtors;
   END f_get_debtor_id;
 
-  /*Функция определеяет является ли человек банкротом на дату p_by_date*/
-  /*Возвращаемые значения:
-  -2: не хватает данных для определения поиска в реестре банкротов.
-  -1: ошибка при работе функции.
-  0: клиент не найден в реестре банкротов.
-  1: клиент находится в реестре банкротов,
-            если это ЮЛ, то статус дел не определяется, с такими ЮЛ не работаем;
-            если это ФЛ или ИП, то дело о банкротстве завершено.
-  2: клиент (ИП или ФЛ) есть в реестре и имеет дело, которое находится в производстве, т.е. это текущий банкрот*/
-  FUNCTION f_is_debtor(p_type      NUMBER /*1-ФЛ, 2-ЮЛ, 4-ИП*/,
+  /*Р¤СѓРЅРєС†РёСЏ РѕРїСЂРµРґРµР»РµСЏРµС‚ СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‡РµР»РѕРІРµРє Р±Р°РЅРєСЂРѕС‚РѕРј РЅР° РґР°С‚Сѓ p_by_date*/
+  /*Р’РѕР·РІСЂР°С‰Р°РµРјС‹Рµ Р·РЅР°С‡РµРЅРёСЏ:
+  -2: РЅРµ С…РІР°С‚Р°РµС‚ РґР°РЅРЅС‹С… РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїРѕРёСЃРєР° РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ.
+  -1: РѕС€РёР±РєР° РїСЂРё СЂР°Р±РѕС‚Рµ С„СѓРЅРєС†РёРё.
+  0: РєР»РёРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ.
+  1: РєР»РёРµРЅС‚ РЅР°С…РѕРґРёС‚СЃСЏ РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ,
+            РµСЃР»Рё СЌС‚Рѕ Р®Р›, С‚Рѕ СЃС‚Р°С‚СѓСЃ РґРµР» РЅРµ РѕРїСЂРµРґРµР»СЏРµС‚СЃСЏ, СЃ С‚Р°РєРёРјРё Р®Р› РЅРµ СЂР°Р±РѕС‚Р°РµРј;
+            РµСЃР»Рё СЌС‚Рѕ Р¤Р› РёР»Рё РРџ, С‚Рѕ РґРµР»Рѕ Рѕ Р±Р°РЅРєСЂРѕС‚СЃС‚РІРµ Р·Р°РІРµСЂС€РµРЅРѕ.
+  2: РєР»РёРµРЅС‚ (РРџ РёР»Рё Р¤Р›) РµСЃС‚СЊ РІ СЂРµРµСЃС‚СЂРµ Рё РёРјРµРµС‚ РґРµР»Рѕ, РєРѕС‚РѕСЂРѕРµ РЅР°С…РѕРґРёС‚СЃСЏ РІ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµ, С‚.Рµ. СЌС‚Рѕ С‚РµРєСѓС‰РёР№ Р±Р°РЅРєСЂРѕС‚*/
+  FUNCTION f_is_debtor(p_type      NUMBER /*1-Р¤Р›, 2-Р®Р›, 4-РРџ*/,
                        p_inn       VARCHAR2,
                        p_snils     VARCHAR2,
                        p_ogrn      VARCHAR2,
@@ -332,12 +332,12 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
   
   BEGIN
     IF debugging THEN
-      DBMS_OUTPUT.PUT_LINE('Поиск в реестре банкротов');
+      DBMS_OUTPUT.PUT_LINE('РџРѕРёСЃРє РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ');
     END IF;
     
     IF nvl(p_type, 0) NOT IN (1, 2, 4) THEN
       IF debugging THEN
-        DBMS_OUTPUT.PUT_LINE('Не указан тип клиента, предполагаем, что это ЮЛ');
+        DBMS_OUTPUT.PUT_LINE('РќРµ СѓРєР°Р·Р°РЅ С‚РёРї РєР»РёРµРЅС‚Р°, РїСЂРµРґРїРѕР»Р°РіР°РµРј, С‡С‚Рѕ СЌС‚Рѕ Р®Р›');
       END IF;
       v_type := 2;
     END IF;
@@ -349,10 +349,10 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                   'F_IS_DEBTOR',
                   null,
                   null,
-                  REGEXP_REPLACE('Клиент ' || p_fullname || ' ' ||
+                  REGEXP_REPLACE('РљР»РёРµРЅС‚ ' || p_fullname || ' ' ||
                                  to_char(p_birthdate, 'dd.mm.yyyy') || ' ' ||
                                  p_inn || ' ' || p_snils ||
-                                 '. Для ФЛ необходимо ИНН или СНИЛС, иначе ФИО и дата рождения',
+                                 '. Р”Р»СЏ Р¤Р› РЅРµРѕР±С…РѕРґРёРјРѕ РРќРќ РёР»Рё РЎРќРР›РЎ, РёРЅР°С‡Рµ Р¤РРћ Рё РґР°С‚Р° СЂРѕР¶РґРµРЅРёСЏ',
                                  '  *',
                                  ' '),
                   USER);
@@ -364,8 +364,8 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                   'F_IS_DEBTOR',
                   null,
                   null,
-                  'Клиент ' || p_fullname ||
-                  '. Для ЮЛ необходимо ИНН или ОГРН',
+                  'РљР»РёРµРЅС‚ ' || p_fullname ||
+                  '. Р”Р»СЏ Р®Р› РЅРµРѕР±С…РѕРґРёРјРѕ РРќРќ РёР»Рё РћР“Р Рќ',
                   USER);
       v_res := -2;
       RETURN v_res;
@@ -375,8 +375,8 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                   'F_IS_DEBTOR',
                   null,
                   null,
-                  'Клиент ' || p_fullname ||
-                  '. Для ИП необходимо ИНН или ОГРН, или СНИЛС',
+                  'РљР»РёРµРЅС‚ ' || p_fullname ||
+                  '. Р”Р»СЏ РРџ РЅРµРѕР±С…РѕРґРёРјРѕ РРќРќ РёР»Рё РћР“Р Рќ, РёР»Рё РЎРќРР›РЎ',
                   USER);
       v_res := -2;
       RETURN v_res;
@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
     END IF;
   
     IF debugging AND v_res = 0 THEN
-      DBMS_OUTPUT.PUT_LINE('Не найден в реестре банкротов');
+      DBMS_OUTPUT.PUT_LINE('РќРµ РЅР°Р№РґРµРЅ РІ СЂРµРµСЃС‚СЂРµ Р±Р°РЅРєСЂРѕС‚РѕРІ');
     END IF;
   
     IF v_case_status = 1 THEN
@@ -425,7 +425,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       RETURN v_res;
   END f_is_debtor;
 
-  /*Процедура массового логирования по найденным банкротам или по тем, у которых закончилось дело*/
+  /*РџСЂРѕС†РµРґСѓСЂР° РјР°СЃСЃРѕРІРѕРіРѕ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ РїРѕ РЅР°Р№РґРµРЅРЅС‹Рј Р±Р°РЅРєСЂРѕС‚Р°Рј РёР»Рё РїРѕ С‚РµРј, Сѓ РєРѕС‚РѕСЂС‹С… Р·Р°РєРѕРЅС‡РёР»РѕСЃСЊ РґРµР»Рѕ*/
   PROCEDURE p_log_efrsb_batch(p_collection IN t_found_cus_debtor_tab,
                               p_dml_type   IN VARCHAR2,
                               p_table      IN VARCHAR2,
@@ -433,14 +433,14 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
     v_text VARCHAR2(500);
   BEGIN
     IF p_dml_type = 'DELETE FROM' THEN
-      v_text := 'Удаление';
+      v_text := 'РЈРґР°Р»РµРЅРёРµ';
     ELSIF p_dml_type = 'INSERT INTO' THEN
-      v_text := 'Добавление';
+      v_text := 'Р”РѕР±Р°РІР»РµРЅРёРµ';
     END IF;
     IF p_table = 'CUS_NOTE' THEN
-      v_text := v_text || ' оповещения';
+      v_text := v_text || ' РѕРїРѕРІРµС‰РµРЅРёСЏ';
     ELSIF p_table = 'GCS' THEN
-      v_text := v_text || ' категории-группы';
+      v_text := v_text || ' РєР°С‚РµРіРѕСЂРёРё-РіСЂСѓРїРїС‹';
     END IF;
   
     FORALL indx IN p_collection.FIRST .. p_collection.LAST SAVE EXCEPTIONS
@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       p_errors := p_errors + TO_NUMBER(SQL%BULK_EXCEPTIONS.COUNT);
   END p_log_efrsb_batch;
 
-  /*Процедура создания динамического запроса на удаление или добавления категории-группы*/
+  /*РџСЂРѕС†РµРґСѓСЂР° СЃРѕР·РґР°РЅРёСЏ РґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ Р·Р°РїСЂРѕСЃР° РЅР° СѓРґР°Р»РµРЅРёРµ РёР»Рё РґРѕР±Р°РІР»РµРЅРёСЏ РєР°С‚РµРіРѕСЂРёРё-РіСЂСѓРїРїС‹*/
   PROCEDURE p_cat_grp_processing(p_collection IN t_found_cus_debtor_tab,
                                  p_dml_type   IN VARCHAR2,
                                  p_dml_where  IN VARCHAR2,
@@ -500,13 +500,13 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                     'P_CAT_GRP_PROCESSING + GCS',
                     null,
                     null,
-                    'Клиент ' || p_collection(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX).iccusnum || ': ' || SQL%BULK_EXCEPTIONS(indx).ERROR_CODE,
+                    'РљР»РёРµРЅС‚ ' || p_collection(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX).iccusnum || ': ' || SQL%BULK_EXCEPTIONS(indx).ERROR_CODE,
                     USER);
       END LOOP;
       p_errors := p_errors + TO_NUMBER(SQL%BULK_EXCEPTIONS.COUNT);
   END p_cat_grp_processing;
 
-  /*Процедура создания динамического запроса на удаление или добавления уведомления о банкротстве на клиенте*/
+  /*РџСЂРѕС†РµРґСѓСЂР° СЃРѕР·РґР°РЅРёСЏ РґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ Р·Р°РїСЂРѕСЃР° РЅР° СѓРґР°Р»РµРЅРёРµ РёР»Рё РґРѕР±Р°РІР»РµРЅРёСЏ СѓРІРµРґРѕРјР»РµРЅРёСЏ Рѕ Р±Р°РЅРєСЂРѕС‚СЃС‚РІРµ РЅР° РєР»РёРµРЅС‚Рµ*/
   PROCEDURE p_notif_processing(p_collection IN t_found_cus_debtor_tab,
                                p_dml_type   IN VARCHAR2,
                                p_dml_where  IN VARCHAR2,
@@ -521,7 +521,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
   
     FORALL indx IN p_collection.FIRST .. p_collection.LAST SAVE EXCEPTIONS
                                          EXECUTE IMMEDIATE v_query USING p_collection(indx).iccusnum,
-                                         'Клиент признан банкротом. Ведётся судебное / внесудебное производство'
+                                         'РљР»РёРµРЅС‚ РїСЂРёР·РЅР°РЅ Р±Р°РЅРєСЂРѕС‚РѕРј. Р’РµРґС‘С‚СЃСЏ СЃСѓРґРµР±РЅРѕРµ / РІРЅРµСЃСѓРґРµР±РЅРѕРµ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ'
       ;
     COMMIT;
   
@@ -535,14 +535,14 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                     'P_NOTIF_PROCESSING + CUS_NOTE',
                     null,
                     null,
-                    'Клиент ' || p_collection(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX).iccusnum || ': ' || SQL%BULK_EXCEPTIONS(indx).ERROR_CODE,
+                    'РљР»РёРµРЅС‚ ' || p_collection(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX).iccusnum || ': ' || SQL%BULK_EXCEPTIONS(indx).ERROR_CODE,
                     USER);
       END LOOP;
     
       p_errors := p_errors + TO_NUMBER(SQL%BULK_EXCEPTIONS.COUNT);
   END p_notif_processing;
 
-  /*Поиск среди клиентов*/
+  /*РџРѕРёСЃРє СЃСЂРµРґРё РєР»РёРµРЅС‚РѕРІ*/
   FUNCTION f_find_debtors RETURN VARCHAR2 IS
     PRAGMA AUTONOMOUS_TRANSACTION;
     v_case_status  NUMBER;
@@ -552,16 +552,16 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
     found_debtors  list_of_debtors;
     return_row     t_found_cus_debtor;
   
-    cus_all_debtors         t_found_cus_debtor_tab; /*найденные все банкроты среди клиентов */
-    cus_cur_debtors         t_found_cus_debtor_tab; /*найденные банкроты с текущим делом */
-    cus_prev_cur_debtors    t_found_cus_debtor_tab; /*прошлый результат банкротов-клиентов с текущим делом */
-    cus_no_more_cur_debtors t_found_cus_debtor_tab; /*дело о банкротстве завершено, для удаления из оповещений и категории/группы */
-    cus_new_cur_debtors     t_found_cus_debtor_tab; /*новый банкрот, для добавления оповещения и категории/группы */
+    cus_all_debtors         t_found_cus_debtor_tab; /*РЅР°Р№РґРµРЅРЅС‹Рµ РІСЃРµ Р±Р°РЅРєСЂРѕС‚С‹ СЃСЂРµРґРё РєР»РёРµРЅС‚РѕРІ */
+    cus_cur_debtors         t_found_cus_debtor_tab; /*РЅР°Р№РґРµРЅРЅС‹Рµ Р±Р°РЅРєСЂРѕС‚С‹ СЃ С‚РµРєСѓС‰РёРј РґРµР»РѕРј */
+    cus_prev_cur_debtors    t_found_cus_debtor_tab; /*РїСЂРѕС€Р»С‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ Р±Р°РЅРєСЂРѕС‚РѕРІ-РєР»РёРµРЅС‚РѕРІ СЃ С‚РµРєСѓС‰РёРј РґРµР»РѕРј */
+    cus_no_more_cur_debtors t_found_cus_debtor_tab; /*РґРµР»Рѕ Рѕ Р±Р°РЅРєСЂРѕС‚СЃС‚РІРµ Р·Р°РІРµСЂС€РµРЅРѕ, РґР»СЏ СѓРґР°Р»РµРЅРёСЏ РёР· РѕРїРѕРІРµС‰РµРЅРёР№ Рё РєР°С‚РµРіРѕСЂРёРё/РіСЂСѓРїРїС‹ */
+    cus_new_cur_debtors     t_found_cus_debtor_tab; /*РЅРѕРІС‹Р№ Р±Р°РЅРєСЂРѕС‚, РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РѕРїРѕРІРµС‰РµРЅРёСЏ Рё РєР°С‚РµРіРѕСЂРёРё/РіСЂСѓРїРїС‹ */
   
     all_cus t_cus_record_col;
   
   BEGIN
-    /*Отбираем тех, у кого признак 'Клиент', заполнено ИНН / СНИЛС / ОГРН или ФИО с датой рождения, ИНН <> ИНН ТКПБ*/
+    /*РћС‚Р±РёСЂР°РµРј С‚РµС…, Сѓ РєРѕРіРѕ РїСЂРёР·РЅР°Рє 'РљР»РёРµРЅС‚', Р·Р°РїРѕР»РЅРµРЅРѕ РРќРќ / РЎРќРР›РЎ / РћР“Р Рќ РёР»Рё Р¤РРћ СЃ РґР°С‚РѕР№ СЂРѕР¶РґРµРЅРёСЏ, РРќРќ <> РРќРќ РўРљРџР‘*/
     SELECT ICUSNUM,
            CCUSFLAG,
            CCUSNAME,
@@ -589,7 +589,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                0
             END) = 1);
   
-    /*Отбираем активных банкротов ФЛ и просто ЮЛ с любым статусом дела с прошлой сверки*/
+    /*РћС‚Р±РёСЂР°РµРј Р°РєС‚РёРІРЅС‹С… Р±Р°РЅРєСЂРѕС‚РѕРІ Р¤Р› Рё РїСЂРѕСЃС‚Рѕ Р®Р› СЃ Р»СЋР±С‹Рј СЃС‚Р°С‚СѓСЃРѕРј РґРµР»Р° СЃ РїСЂРѕС€Р»РѕР№ СЃРІРµСЂРєРё*/
     SELECT d.ICUSNUM, BANKRUPTID, ISTATUS
       BULK COLLECT
       INTO cus_prev_cur_debtors
@@ -601,7 +601,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
   
     FOR indx IN all_cus.FIRST .. all_cus.LAST LOOP
       IF debugging THEN
-        DBMS_OUTPUT.put_line(chr(10) || chr(10) || 'Клиент ' ||
+        DBMS_OUTPUT.put_line(chr(10) || chr(10) || 'РљР»РёРµРЅС‚ ' ||
                              to_char(all_cus(indx).icusnum));
       END IF;
       found_debtors := f_get_debtor_id(all_cus(indx).ccusflag,
@@ -613,7 +613,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       IF found_debtors.count > 0 THEN
         IF found_debtors.EXISTS(-1) THEN
           IF debugging THEN
-            DBMS_OUTPUT.put_line('Ошибка ' ||
+            DBMS_OUTPUT.put_line('РћС€РёР±РєР° ' ||
                                  to_char(all_cus(indx).icusnum));
           END IF;
         ELSE
@@ -638,7 +638,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       END IF;
     END LOOP;
   
-    /*Если первая загрузка, то Count = 0, поэтому идем дальше. Иначе: 1/2. Находим банкротов-клиентов, у которых завершилось дело о банкротстве*/
+    /*Р•СЃР»Рё РїРµСЂРІР°СЏ Р·Р°РіСЂСѓР·РєР°, С‚Рѕ Count = 0, РїРѕСЌС‚РѕРјСѓ РёРґРµРј РґР°Р»СЊС€Рµ. РРЅР°С‡Рµ: 1/2. РќР°С…РѕРґРёРј Р±Р°РЅРєСЂРѕС‚РѕРІ-РєР»РёРµРЅС‚РѕРІ, Сѓ РєРѕС‚РѕСЂС‹С… Р·Р°РІРµСЂС€РёР»РѕСЃСЊ РґРµР»Рѕ Рѕ Р±Р°РЅРєСЂРѕС‚СЃС‚РІРµ*/
     IF cus_prev_cur_debtors.COUNT > 0 THEN
       FOR indx_p IN cus_prev_cur_debtors.FIRST .. cus_prev_cur_debtors.LAST LOOP
         v_exists       := 0;
@@ -646,41 +646,41 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
         FOR indx_c IN cus_cur_debtors.FIRST .. cus_cur_debtors.LAST LOOP
           EXIT WHEN v_exists = 1;
           IF v_loop_icusnum = cus_cur_debtors(indx_c).iccusnum THEN
-            /*IF debugging THEN DBMS_OUTPUT.PUT_LINE(v_loop_icusnum||' уже есть в таблице клиентах-банкротах'); /*END IF;*/
+            /*IF debugging THEN DBMS_OUTPUT.PUT_LINE(v_loop_icusnum||' СѓР¶Рµ РµСЃС‚СЊ РІ С‚Р°Р±Р»РёС†Рµ РєР»РёРµРЅС‚Р°С…-Р±Р°РЅРєСЂРѕС‚Р°С…'); END IF;*/
             v_exists := 1;
           END IF;
         END LOOP;
       
         IF v_exists = 0 THEN
           IF debugging THEN
-            DBMS_OUTPUT.PUT_LINE('Завершено дело о банкротстве у ' ||
+            DBMS_OUTPUT.PUT_LINE('Р—Р°РІРµСЂС€РµРЅРѕ РґРµР»Рѕ Рѕ Р±Р°РЅРєСЂРѕС‚СЃС‚РІРµ Сѓ ' ||
                                  v_loop_icusnum);
           END IF;
           cus_no_more_cur_debtors(cus_no_more_cur_debtors.COUNT + 1) := cus_prev_cur_debtors(indx_p);
         END IF;
       END LOOP;
     
-      /*2/2. Находим новых актуальных банкротов-клиентов*/
+      /*2/2. РќР°С…РѕРґРёРј РЅРѕРІС‹С… Р°РєС‚СѓР°Р»СЊРЅС‹С… Р±Р°РЅРєСЂРѕС‚РѕРІ-РєР»РёРµРЅС‚РѕРІ*/
       FOR indx_c IN cus_cur_debtors.FIRST .. cus_cur_debtors.LAST LOOP
         v_exists       := 0;
         v_loop_icusnum := cus_cur_debtors(indx_c).iccusnum;
         FOR indx_p IN cus_prev_cur_debtors.FIRST .. cus_prev_cur_debtors.LAST LOOP
           EXIT WHEN v_exists = 1;
           IF v_loop_icusnum = cus_prev_cur_debtors(indx_p).iccusnum THEN
-            /*IF debugging THEN DBMS_OUTPUT.PUT_LINE('Уже есть в таблице клиентах-банкротах '||v_loop_icusnum); END IF;*/
+            /*IF debugging THEN DBMS_OUTPUT.PUT_LINE('РЈР¶Рµ РµСЃС‚СЊ РІ С‚Р°Р±Р»РёС†Рµ РєР»РёРµРЅС‚Р°С…-Р±Р°РЅРєСЂРѕС‚Р°С… '||v_loop_icusnum); END IF;*/
             v_exists := 1;
           END IF;
         END LOOP;
       
         IF v_exists = 0 THEN
           IF debugging THEN
-            DBMS_OUTPUT.PUT_LINE('Начато дело о банкротстве у ' ||
+            DBMS_OUTPUT.PUT_LINE('РќР°С‡Р°С‚Рѕ РґРµР»Рѕ Рѕ Р±Р°РЅРєСЂРѕС‚СЃС‚РІРµ Сѓ ' ||
                                  v_loop_icusnum);
           END IF;
           cus_new_cur_debtors(cus_new_cur_debtors.COUNT + 1) := cus_cur_debtors(indx_c);
         END IF;
       END LOOP;
-      /*При первой загрузке добавляем всем акутальным клиентам-банкротам уведомления и категорию-группу*/
+      /*РџСЂРё РїРµСЂРІРѕР№ Р·Р°РіСЂСѓР·РєРµ РґРѕР±Р°РІР»СЏРµРј РІСЃРµРј Р°РєСѓС‚Р°Р»СЊРЅС‹Рј РєР»РёРµРЅС‚Р°Рј-Р±Р°РЅРєСЂРѕС‚Р°Рј СѓРІРµРґРѕРјР»РµРЅРёСЏ Рё РєР°С‚РµРіРѕСЂРёСЋ-РіСЂСѓРїРїСѓ*/
     ELSIF cus_prev_cur_debtors.COUNT = 0 THEN
       p_notif_processing(cus_cur_debtors,
                          'INSERT INTO',
@@ -692,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                            v_err_count);
     END IF;
   
-    /*Если есть клиенты-банкроты, у которых завершилось производство, то убираем у них оповещение и категорию-группу*/
+    /*Р•СЃР»Рё РµСЃС‚СЊ РєР»РёРµРЅС‚С‹-Р±Р°РЅРєСЂРѕС‚С‹, Сѓ РєРѕС‚РѕСЂС‹С… Р·Р°РІРµСЂС€РёР»РѕСЃСЊ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ, С‚Рѕ СѓР±РёСЂР°РµРј Сѓ РЅРёС… РѕРїРѕРІРµС‰РµРЅРёРµ Рё РєР°С‚РµРіРѕСЂРёСЋ-РіСЂСѓРїРїСѓ*/
     IF cus_no_more_cur_debtors.COUNT > 0 THEN
       p_notif_processing(cus_no_more_cur_debtors,
                          'DELETE FROM',
@@ -704,14 +704,14 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                            v_err_count);
       IF debugging THEN
         FOR indx in cus_no_more_cur_debtors.FIRST .. cus_no_more_cur_debtors.LAST LOOP
-          DBMS_OUTPUT.PUT_LINE('Удаляем оповещение и категорию-группу для ' || cus_no_more_cur_debtors(indx).iccusnum);
+          DBMS_OUTPUT.PUT_LINE('РЈРґР°Р»СЏРµРј РѕРїРѕРІРµС‰РµРЅРёРµ Рё РєР°С‚РµРіРѕСЂРёСЋ-РіСЂСѓРїРїСѓ РґР»СЏ ' || cus_no_more_cur_debtors(indx).iccusnum);
         END LOOP;
       END IF;
     ELSIF debugging THEN
-      DBMS_OUTPUT.PUT_LINE('Нет текущих банкротов с завершенным производством');
+      DBMS_OUTPUT.PUT_LINE('РќРµС‚ С‚РµРєСѓС‰РёС… Р±Р°РЅРєСЂРѕС‚РѕРІ СЃ Р·Р°РІРµСЂС€РµРЅРЅС‹Рј РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕРј');
     END IF;
   
-    /*Если появился новый банкрот-клиент, то добавляем оповещение и категорию-группу*/
+    /*Р•СЃР»Рё РїРѕСЏРІРёР»СЃСЏ РЅРѕРІС‹Р№ Р±Р°РЅРєСЂРѕС‚-РєР»РёРµРЅС‚, С‚Рѕ РґРѕР±Р°РІР»СЏРµРј РѕРїРѕРІРµС‰РµРЅРёРµ Рё РєР°С‚РµРіРѕСЂРёСЋ-РіСЂСѓРїРїСѓ*/
     IF cus_new_cur_debtors.COUNT > 0 THEN
       p_notif_processing(cus_new_cur_debtors,
                          'INSERT INTO',
@@ -723,16 +723,16 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                            v_err_count);
       IF debugging THEN
         FOR indx in cus_new_cur_debtors.FIRST .. cus_new_cur_debtors.LAST LOOP
-          DBMS_OUTPUT.PUT_LINE('Добавляем оповещение и категорию-группу для ' || cus_new_cur_debtors(indx).iccusnum);
+          DBMS_OUTPUT.PUT_LINE('Р”РѕР±Р°РІР»СЏРµРј РѕРїРѕРІРµС‰РµРЅРёРµ Рё РєР°С‚РµРіРѕСЂРёСЋ-РіСЂСѓРїРїСѓ РґР»СЏ ' || cus_new_cur_debtors(indx).iccusnum);
         END LOOP;
       END IF;
     ELSIF debugging THEN
-      DBMS_OUTPUT.PUT_LINE('Нет новых банкротов');
+      DBMS_OUTPUT.PUT_LINE('РќРµС‚ РЅРѕРІС‹С… Р±Р°РЅРєСЂРѕС‚РѕРІ');
     END IF;
   
     EXECUTE IMMEDIATE 'TRUNCATE TABLE gis_cus_debtors';
   
-    /*Добавляем найденных банкротов со статусами 1 и 2 в таблицу gis_cus_debtors*/
+    /*Р”РѕР±Р°РІР»СЏРµРј РЅР°Р№РґРµРЅРЅС‹С… Р±Р°РЅРєСЂРѕС‚РѕРІ СЃРѕ СЃС‚Р°С‚СѓСЃР°РјРё 1 Рё 2 РІ С‚Р°Р±Р»РёС†Сѓ gis_cus_debtors*/
     BEGIN
       FORALL indx IN 1 .. cus_all_debtors.COUNT SAVE EXCEPTIONS
         INSERT INTO gis_cus_debtors g
@@ -749,23 +749,23 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
                       'F_FIND_DEBTORS + GIS_CUS_DEBTORS',
                       null,
                       null,
-                      'Клиент ' || cus_all_debtors(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX).iccusnum || ': ' || SQL%BULK_EXCEPTIONS(indx).ERROR_CODE,
+                      'РљР»РёРµРЅС‚ ' || cus_all_debtors(SQL%BULK_EXCEPTIONS(indx).ERROR_INDEX).iccusnum || ': ' || SQL%BULK_EXCEPTIONS(indx).ERROR_CODE,
                       USER);
         END LOOP;
       
         v_err_count := v_err_count + TO_NUMBER(SQL%BULK_EXCEPTIONS.COUNT);
     END;
   
-    RETURN 'Банкроты: ' || to_char(cus_all_debtors.COUNT) || ' . Активных: ' || to_char(cus_cur_debtors.COUNT) ||(case when
+    RETURN 'Р‘Р°РЅРєСЂРѕС‚С‹: ' || to_char(cus_all_debtors.COUNT) || ' . РђРєС‚РёРІРЅС‹С…: ' || to_char(cus_cur_debtors.COUNT) ||(case when
                                                                                                                   cus_new_cur_debtors.COUNT > 0 THEN
-                                                                                                                  '. Новые банкроты: ' ||
+                                                                                                                  '. РќРѕРІС‹Рµ Р±Р°РЅРєСЂРѕС‚С‹: ' ||
                                                                                                                   cus_new_cur_debtors.COUNT else '' end) ||(case when
                                                                                                                                                             cus_no_more_cur_debtors.COUNT > 0 THEN
-                                                                                                                                                            '. Удаленные банкроты: ' ||
+                                                                                                                                                            '. РЈРґР°Р»РµРЅРЅС‹Рµ Р±Р°РЅРєСЂРѕС‚С‹: ' ||
                                                                                                                                                             cus_no_more_cur_debtors.COUNT else '' end) ||(case when
                                                                                                                                                                                                           v_err_count = 0 OR
                                                                                                                                                                                                           v_err_count IS NULL then '' else
-                                                                                                                                                                                                          '. Ошибок: ' ||
+                                                                                                                                                                                                          '. РћС€РёР±РѕРє: ' ||
                                                                                                                                                                                                           to_char(v_err_count) end);
   END f_find_debtors;
 
@@ -783,7 +783,7 @@ CREATE OR REPLACE PACKAGE BODY gis_efrsb is
       FETCH leg_case
         INTO v_case;
       IF leg_case%ROWCOUNT = 0 THEN
-        PIPE ROW('Отсутствуют судебные дела');
+        PIPE ROW('РћС‚СЃСѓС‚СЃС‚РІСѓСЋС‚ СЃСѓРґРµР±РЅС‹Рµ РґРµР»Р°');
       END IF;
       EXIT WHEN leg_case%NOTFOUND;
       IF leg_case%ROWCOUNT >= 1 THEN
